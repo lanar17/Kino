@@ -8,8 +8,22 @@ package Client;
 import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.StringWriter;
 import java.util.Scanner;
 import javax.swing.JButton;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.MimeHeaders;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPConnection;
+import javax.xml.soap.SOAPConnectionFactory;
+import javax.xml.soap.SOAPElement;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPMessage;
+import javax.xml.soap.SOAPPart;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  *
@@ -88,6 +102,8 @@ public class Client extends javax.swing.JFrame {
         phonejTextField = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         reservButton = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -263,6 +279,20 @@ public class Client extends javax.swing.JFrame {
             }
         });
 
+        jButton1.setText("getMiejsca");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton3.setText("reservTest");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -273,6 +303,11 @@ public class Client extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jLabel5)
                         .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addGap(15, 15, 15)
+                        .addComponent(jButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(reservButton))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel7)
@@ -281,13 +316,13 @@ public class Client extends javax.swing.JFrame {
                             .addComponent(jLabel9))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(jButton3)
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(namejTextField)
                             .addComponent(emailjTextField, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(surenamejTextField)
-                            .addComponent(phonejTextField)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(reservButton)))
+                            .addComponent(phonejTextField))))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -311,8 +346,12 @@ public class Client extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(phonejTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
-                .addComponent(reservButton)
+                .addGap(18, 18, 18)
+                .addComponent(jButton3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(reservButton)
+                    .addComponent(jButton1))
                 .addContainerGap())
         );
 
@@ -1314,6 +1353,48 @@ public class Client extends javax.swing.JFrame {
         jLabelMessage.setText(movieComboBox.getSelectedItem().toString());
     }//GEN-LAST:event_movieComboBoxActionPerformed
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+                try {
+            // Create SOAP Connection
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+            // Send SOAP Message to SOAP Server
+            String url = "http://localhost:8080/WebServices/kino?wsdl"; //192.168.0.16
+            SOAPMessage soapResponse = soapConnection.call(getMiejsca(), url);
+
+            // Process the SOAP Response
+            printSOAPResponse(soapResponse);
+
+            soapConnection.close();
+        } catch (Exception e) {
+            System.err.println("Error occurred while sending SOAP Request to Server");
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        try {
+            // Create SOAP Connection
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+            // Send SOAP Message to SOAP Server
+            String url = "http://localhost:8080/WebServices/kino?wsdl";
+            SOAPMessage soapResponse = soapConnection.call(dodajRejestracje(), url);
+
+            // Process the SOAP Response
+            printSOAPResponse(soapResponse);
+
+            soapConnection.close();
+        } catch (Exception e) {
+            System.err.println("Error occurred while sending SOAP Request to Server");
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
     /**
      * @param args the command line arguments
      * @throws java.io.FileNotFoundException
@@ -1489,6 +1570,108 @@ public class Client extends javax.swing.JFrame {
         }
     }
     
+    private static String printSOAPResponse(SOAPMessage soapResponse) throws Exception { //void
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        Source sourceContent = soapResponse.getSOAPPart().getContent();
+        System.out.print("\nResponse SOAP Message = ");
+        StringWriter writer = new StringWriter();
+        StreamResult result = new StreamResult(writer);
+        transformer.transform(sourceContent, result);
+        String response=writer.getBuffer().toString(); // !!
+        try {
+            String [] tmp=response.split("<return>"); //new
+            String tmp2=tmp[1]; // na try
+            tmp=tmp2.split("</return>");
+
+            response=tmp[0];
+             
+        }
+        catch(Exception ex) {
+            System.out.println("Nie znaleziono seansu o podanym ID "); // do zmiany ??
+           // jLabelMessage.setText("Nie znaleziono seansu o podanym ID");
+           response="empty";
+        }
+        System.out.print(response);        
+        //System.out.print(response);   
+        return response;
+    }
+    
+    private static SOAPMessage getMiejsca() throws Exception {
+        MessageFactory messageFactory = MessageFactory.newInstance();
+        SOAPMessage soapMessage = messageFactory.createMessage();
+        SOAPPart soapPart = soapMessage.getSOAPPart();
+
+        String serverURI = "http://interf.ws/"; // potem zmienic na http://interf.ws/ vs "http://test/"
+
+        //SOAP Envelope
+        SOAPEnvelope envelope = soapPart.getEnvelope();
+        envelope.addNamespaceDeclaration("int", serverURI);
+        	
+        // SOAP Body
+        SOAPBody soapBody = envelope.getBody();
+        SOAPElement soapBodyElem = soapBody.addChildElement("getMiejsca", "int");
+        SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("arg0");
+        soapBodyElem1.addTextNode("1"); //IDE SEANSU DLA KTOREGO ZWRACA ZAJETE MIEJSCA
+
+        MimeHeaders headers = soapMessage.getMimeHeaders();
+        headers.addHeader("SOAPAction", serverURI  + "kino");
+
+        soapMessage.saveChanges();
+
+        /* Print the request message */
+        System.out.print("Request SOAP Message = ");
+        soapMessage.writeTo(System.out);
+        System.out.println();
+
+        return soapMessage;
+    }
+    
+    private static SOAPMessage dodajRejestracje() throws Exception {
+        MessageFactory messageFactory = MessageFactory.newInstance();
+        SOAPMessage soapMessage = messageFactory.createMessage();
+        SOAPPart soapPart = soapMessage.getSOAPPart();
+
+        String serverURI = "http://interf.ws/";
+
+        //SOAP Envelope
+        SOAPEnvelope envelope = soapPart.getEnvelope();
+        envelope.addNamespaceDeclaration("int", serverURI);
+        	
+        // SOAP Body
+        SOAPBody soapBody = envelope.getBody();
+        SOAPElement soapBodyElem = soapBody.addChildElement("dodajRejestracje", "int"); //prefix (int) !! do zmiany
+        
+        SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("arg0"); //wszystko w stringach podawac
+        soapBodyElem1.addTextNode("2"); //wstwic wlasciwe wartosci // IDE SEANSU
+        
+        SOAPElement soapBodyElem2 = soapBodyElem.addChildElement("arg1");
+        soapBodyElem2.addTextNode("Jan");
+        
+        SOAPElement soapBodyElem3 = soapBodyElem.addChildElement("arg2");
+        soapBodyElem3.addTextNode("Kowalski");
+        
+        SOAPElement soapBodyElem4 = soapBodyElem.addChildElement("arg3");
+        soapBodyElem4.addTextNode("jan.kowalski@mail.com");
+        
+        SOAPElement soapBodyElem5 = soapBodyElem.addChildElement("arg4");
+        soapBodyElem5.addTextNode("123456789");
+        
+        SOAPElement soapBodyElem6 = soapBodyElem.addChildElement("arg5");
+        soapBodyElem6.addTextNode("01");
+
+        MimeHeaders headers = soapMessage.getMimeHeaders();
+        headers.addHeader("SOAPAction", serverURI  + "test");
+
+        soapMessage.saveChanges();
+
+        /* Print the request message */
+        System.out.print("Request SOAP Message = ");
+        soapMessage.writeTo(System.out);
+        System.out.println();
+
+        return soapMessage;
+    }
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1505,6 +1688,7 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JButton jButton07;
     private javax.swing.JButton jButton08;
     private javax.swing.JButton jButton09;
+    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton12;
@@ -1526,6 +1710,7 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JButton jButton27;
     private javax.swing.JButton jButton28;
     private javax.swing.JButton jButton29;
+    private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton30;
     private javax.swing.JButton jButton31;
     private javax.swing.JButton jButton32;
