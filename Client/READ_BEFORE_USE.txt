@@ -1,0 +1,20 @@
+Files: movies.txt and cinemas.txt
+Must be on Tomcat server in xampp\tomcat\webapps\ROOT\testFolder
+
+Structures:
+==========
+
+cinemas.txt
+{
+cinema_name
+cinema_id
+}
+
+movies.txt
+{
+movie_name
+movie_date (does not important at all)
+movie_id
+cinema_id
+}
+

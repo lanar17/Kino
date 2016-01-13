@@ -6,10 +6,14 @@
 package Client;
 
 import java.awt.Color;
+import java.awt.List;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Vector;
 import javax.swing.JButton;
 import javax.xml.soap.MessageFactory;
 import javax.xml.soap.MimeHeaders;
@@ -34,23 +38,34 @@ public class Client extends javax.swing.JFrame {
     /**
      * Creates new form Client
      */
-    String [] Cinemas = {
-        "Kraków",
-        "Warszawa",
-        "Poznań",
-        "Gdynia",
-        "Lublin",
-        "Szczecin",
-        "Wrocław"
-    };
     
-    String [] Movies = {
+    /*static String [] Movies = {
         "Gwiezdne Wojny",
         "James Bond",
         "Fast and Furious",
         "Piraci z Karaibów",
         "Leon Zawodowiec"
-    };
+    };*/
+    //Kino + ID Kina z pliku
+    ArrayList<Cinemas> Kina = new ArrayList<Cinemas>();
+    
+    //Nazwy Kin do Buttona
+    ArrayList<String> Cinemas = new ArrayList<String>();
+    
+    //Film + ID Filmu + ID kina w który jest dostepne
+    ArrayList<Movies> Filmy = new ArrayList<Movies>();
+    
+    //Nazwy Filmow do Buttona
+    ArrayList<String> Movies = new ArrayList<String>();
+    
+    //unAvailableSeats
+    ArrayList<String> unAvailableSeats = new ArrayList<String>();
+    
+    //unAvailableSeats
+    ArrayList<String> choosenSeat = new ArrayList<String>();
+    //ID of choosen Cinema
+    int choosenCinemaID = 1;
+    String choosenMovieID;
     
     int[][] seatTab = new int[6][10];
     JButton[][] tab = new JButton[6][10];
@@ -59,19 +74,24 @@ public class Client extends javax.swing.JFrame {
     static String portNumber;
     String choosenCity;
     String choosenMovie;
-    String choosenSeat;
+    String seatsString = "";
     String name;
     String surename;
     String email;
-    int phone;
-    boolean isChoosen = false;
+    String phone;
+    int howManySeats;
+    int currentlyChoosenSeats;
+    boolean isMovieSelected = false;
+    boolean isDownloaded = false;
+    
+    Cinemas c = new Cinemas();
     
     
     public Client() {
         initComponents();
-        getCinemas();
+        //getCinemas();
         getMovies();
-        fillColor();
+        prepare();
     }
 
     /**
@@ -90,7 +110,8 @@ public class Client extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         movieComboBox = new javax.swing.JComboBox();
         chooseButton = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        jComboBoxHowMany = new javax.swing.JComboBox();
+        jLabel10 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -102,8 +123,6 @@ public class Client extends javax.swing.JFrame {
         phonejTextField = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         reservButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -170,10 +189,10 @@ public class Client extends javax.swing.JFrame {
         jPanel6 = new javax.swing.JPanel();
         jLabel11 = new javax.swing.JLabel();
         jLabelMessage = new javax.swing.JLabel();
+        downloadButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Cimema City");
-        setResizable(false);
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel1.setText("System rezerwacji biletów Cimena City");
@@ -203,33 +222,26 @@ public class Client extends javax.swing.JFrame {
             }
         });
 
-        jButton2.setText("AAA");
-        jButton2.setEnabled(false);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
+        jComboBoxHowMany.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5" }));
+
+        jLabel10.setText("Liczba miejsc:");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(39, 39, 39)
-                        .addComponent(jButton2)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 68, Short.MAX_VALUE)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel10))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 72, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(movieComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cinemaComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(chooseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(chooseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jComboBoxHowMany, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(2, 2, 2))
         );
         jPanel1Layout.setVerticalGroup(
@@ -243,10 +255,12 @@ public class Client extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(movieComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 32, Short.MAX_VALUE)
+                .addGap(26, 26, 26)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chooseButton)
-                    .addComponent(jButton2))
+                    .addComponent(jComboBoxHowMany, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel10))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
+                .addComponent(chooseButton)
                 .addContainerGap())
         );
 
@@ -279,20 +293,6 @@ public class Client extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setText("getMiejsca");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
-        jButton3.setText("reservTest");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -300,13 +300,8 @@ public class Client extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addGap(15, 15, 15)
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(15, 149, Short.MAX_VALUE)
                         .addComponent(reservButton))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -316,13 +311,13 @@ public class Client extends javax.swing.JFrame {
                             .addComponent(jLabel9))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jButton3)
-                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(namejTextField)
                             .addComponent(emailjTextField, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(surenamejTextField)
-                            .addComponent(phonejTextField))))
+                            .addComponent(phonejTextField)))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -346,12 +341,8 @@ public class Client extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(phonejTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel9))
-                .addGap(18, 18, 18)
-                .addComponent(jButton3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(reservButton)
-                    .addComponent(jButton1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
+                .addComponent(reservButton)
                 .addContainerGap())
         );
 
@@ -997,6 +988,13 @@ public class Client extends javax.swing.JFrame {
                 .addContainerGap(16, Short.MAX_VALUE))
         );
 
+        downloadButton.setText("Pobierz Dane");
+        downloadButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                downloadButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1012,25 +1010,30 @@ public class Client extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(jLabel1))
-                .addContainerGap(79, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(32, 32, 32)
+                        .addComponent(downloadButton)))
+                .addContainerGap(75, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(downloadButton))
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(27, 27, 27))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -1038,20 +1041,31 @@ public class Client extends javax.swing.JFrame {
 
     private void chooseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chooseButtonActionPerformed
         // TODO add your handling code here:
-        
+       choosenSeat.clear();
+       unAvailableSeats.clear();
+       howManySeats = Integer.parseInt( jComboBoxHowMany.getSelectedItem().toString() );
+       currentlyChoosenSeats = 0;
        choosenCity = cinemaComboBox.getSelectedItem().toString();
        choosenMovie = movieComboBox.getSelectedItem().toString();
+       int movieID = findMovieID(choosenMovie);
+       choosenMovieID = Integer.toString( movieID );
+       System.out.println("ID wybranego filmu:" + movieID);
+       String usedSeats = downloadSeats(movieID);
+       if(usedSeats == "empty") {
+           jLabelMessage.setText("BŁAD, nie znaleziono seansu o podanym ID");
+           return;
+       }
+       for(String part : usedSeats.split("/")) {
+           unAvailableSeats.add(part);
+       }
        reservButton.setEnabled(true);
+       jLabelMessage.setText("Rezerwujesz " + howManySeats + " miejsc");
         for (int i=0; i<6; i++) {
             for (int j=0; j<10; j++) {
                 tab[i][j].setEnabled(true);
             }
         }
-       
-       //System.out.println(choosenCity); // OK
-       //System.out.println(choosenMovie); // OK
-       // TODO:
-       //void gerReserverSeatsFromServer (choosenCity, choosenMovie);
+        fillColor();
     }//GEN-LAST:event_chooseButtonActionPerformed
 
     private void jButton01ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton01ActionPerformed
@@ -1089,11 +1103,6 @@ public class Client extends javax.swing.JFrame {
     private void jButton05ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton05ActionPerformed
         reservSeat("05");              // TODO add your handling code here:
     }//GEN-LAST:event_jButton05ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
-        fillColor();        
-    }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton00ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton00ActionPerformed
         // TODO add your handling code here:
@@ -1302,8 +1311,8 @@ public class Client extends javax.swing.JFrame {
 
     private void reservButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reservButtonActionPerformed
         // TODO add your handling code here:
-        if(isChoosen == false) {
-            jLabelMessage.setText("Wybierz miejsce!");
+        if(currentlyChoosenSeats < howManySeats) {
+            jLabelMessage.setText("Nie wybrano wszystkich miejsc!");
             return;
         }
         if (namejTextField.getText().isEmpty()) {
@@ -1326,8 +1335,13 @@ public class Client extends javax.swing.JFrame {
         name = namejTextField.getText();
         surename = surenamejTextField.getText();
         email = emailjTextField.getText();
+        
         try {
-            phone = Integer.parseInt(phonejTextField.getText());
+            if(phonejTextField.getText().length() > 9) {
+                jLabelMessage.setText("Telefon może mieć maksymalnie 9 cyfr!");
+                return;
+            }
+            phone = phonejTextField.getText();
         }
         catch(NumberFormatException ex) {
             jLabelMessage.setText("Niepoprawny numer telefonu");
@@ -1338,62 +1352,56 @@ public class Client extends javax.swing.JFrame {
         System.out.println(surename);
         System.out.println(email);
         System.out.println(phone);
-        jLabelMessage.setText("Rezerwacja przyjęta!");
-        
-        //send (choosenMovie, choosenCity, choosen name, surename, email, phone, nr);
+        seatsString = "";
+        if(choosenSeat.size() == 1) {
+            seatsString=choosenSeat.get(0);
+        } 
+        else{ 
+            for(int i=0; i<choosenSeat.size(); i++) {
+                String temp = choosenSeat.get(i) + "/";
+                seatsString += temp;
+            }
+            seatsString = seatsString.substring(0, seatsString.length()-1);
+        }
+        String reservationResult = saveReservation(choosenMovieID, name, surename, email, phone, seatsString);
+        System.out.println(reservationResult);
+        if(reservationResult.equals("true")){
+            jLabelMessage.setText("Rezerwacja przyjęta!");
+            clearAfterReservation();
+        }
+        else if(reservationResult.equals("false")) {
+            jLabelMessage.setText("Jedno z miejsc jest niedostępne, spróbuj ponownie!");
+            clearAfterFalseReservation(choosenMovieID);
+        }
+        else {
+            jLabelMessage.setText(reservationResult);
+            System.out.println(reservationResult);
+        }
     }//GEN-LAST:event_reservButtonActionPerformed
 
     private void cinemaComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cinemaComboBoxActionPerformed
         // TODO add your handling code here:
         jLabelMessage.setText(cinemaComboBox.getSelectedItem().toString());
+        findMovies(cinemaComboBox.getSelectedItem().toString());
     }//GEN-LAST:event_cinemaComboBoxActionPerformed
 
     private void movieComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_movieComboBoxActionPerformed
         // TODO add your handling code here:
-        jLabelMessage.setText(movieComboBox.getSelectedItem().toString());
+      // jLabelMessage.setText(movieComboBox.getSelectedItem().toString());
     }//GEN-LAST:event_movieComboBoxActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void downloadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downloadButtonActionPerformed
         // TODO add your handling code here:
-                try {
-            // Create SOAP Connection
-            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
-            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
-
-            // Send SOAP Message to SOAP Server
-            String url = "http://localhost:8080/WebServices/kino?wsdl"; //192.168.0.16
-            SOAPMessage soapResponse = soapConnection.call(getMiejsca(), url);
-
-            // Process the SOAP Response
-            printSOAPResponse(soapResponse);
-
-            soapConnection.close();
-        } catch (Exception e) {
-            System.err.println("Error occurred while sending SOAP Request to Server");
-            e.printStackTrace();
+        if(!isDownloaded){
+            setCinemas();
+            setMovies();
+            isDownloaded = true;
         }
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // TODO add your handling code here:
-        try {
-            // Create SOAP Connection
-            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
-            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
-
-            // Send SOAP Message to SOAP Server
-            String url = "http://localhost:8080/WebServices/kino?wsdl";
-            SOAPMessage soapResponse = soapConnection.call(dodajRejestracje(), url);
-
-            // Process the SOAP Response
-            printSOAPResponse(soapResponse);
-
-            soapConnection.close();
-        } catch (Exception e) {
-            System.err.println("Error occurred while sending SOAP Request to Server");
-            e.printStackTrace();
+        else {
+            System.out.println("Dane już zostały wczytane!");
         }
-    }//GEN-LAST:event_jButton3ActionPerformed
+
+    }//GEN-LAST:event_downloadButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1424,6 +1432,9 @@ public class Client extends javax.swing.JFrame {
         //</editor-fold>
 
         getServerInfo();
+        downloadCinemas();
+        downloadMovies();
+        //setCinemas();
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -1445,10 +1456,7 @@ public class Client extends javax.swing.JFrame {
         }
     }
     
-     
-    
     public void fillColor() {
-        
         // 0 = wolne miejsce
         // 1 = zajete miejsce
         // 2 = wybrane do rezerwacji
@@ -1456,18 +1464,20 @@ public class Client extends javax.swing.JFrame {
         for (int i=0; i<6; i++) {
             for (int j=0; j<10; j++) {
                 seatTab[i][j] = 0;
+                tab[i][j].setBackground(Color.green);
             }
         }
-        //MOCK
-        seatTab [3][4] = 1;
-        seatTab [3][5] = 1;
-        seatTab [2][4] = 1;
-        seatTab [3][1] = 1;
-        seatTab [5][2] = 1;
-        seatTab [5][3] = 1;
-        seatTab [5][9] = 1;
-        seatTab [5][7] = 1;
-        seatTab [5][8] = 1;
+        for(int i=0; i<unAvailableSeats.size(); i++) {
+            String nr = unAvailableSeats.get(i);
+            int first = Integer.parseInt(nr.substring(0,1));
+            int second = Integer.parseInt(nr.substring(1));
+            seatTab[first][second] = 1;
+            tab[first][second].setBackground(Color.yellow);
+        }        
+    }
+     
+    
+    public void prepare() {
         
         tab[0][0] = jButton00;        tab[0][1] = jButton01;        tab[0][2] = jButton02;
         tab[0][3] = jButton03;        tab[0][4] = jButton04;        tab[0][5] = jButton05;
@@ -1498,57 +1508,56 @@ public class Client extends javax.swing.JFrame {
         tab[5][3] = jButton53;        tab[5][4] = jButton54;        tab[5][5] = jButton55;
         tab[5][6] = jButton56;        tab[5][7] = jButton57;        tab[5][8] = jButton58;
         tab[5][9] = jButton59;
-        
-        for (int i=0; i<6; i++) {
-            for (int j=0; j<10; j++) {
-                if (seatTab[i][j] == 0)
-                    tab[i][j].setBackground(Color.green);
-                if (seatTab[i][j] == 1)
-                    tab[i][j].setBackground(Color.yellow);
-                if (seatTab[i][j] == 2)
-                    tab[i][j].setBackground(Color.orange);
-            }
-        }
-        
+
         for (int i=0; i<6; i++) {
             for (int j=0; j<10; j++) {
                 tab[i][j].setEnabled(false);
             }
         }
     }
-    
+
     public void reservSeat(String nr) {
         int first = Integer.parseInt(nr.substring(0,1));
         int second = Integer.parseInt(nr.substring(1));
-        if(!isChoosen && seatTab[first][second] != 1) {
-            choosenSeat = nr;
-            isChoosen = true;
-            changeReservedColor(first, second);
-            jLabelMessage.setText("Rezerwacja miejsca: " + nr);
-            System.out.println("Rezerwacja miejsca: " + nr);
-            //System.out.println(first);
-            //System.out.println(second);
-                       System.out.println("choosenSeat " + choosenSeat);
+        if(seatTab[first][second] == 1){
+            jLabelMessage.setText("Miejsce jest już zajęte");
+            return;
         }
-       else if(nr == choosenSeat) {
-            choosenSeat = null;
-            isChoosen = false;
-            unReservSeat(first, second);
-            jLabelMessage.setText("Wybierz miejsce");
-            System.out.println("Anulowanie rezerwacji miejsca: " + nr);
-            System.out.println("choosenSeat " + choosenSeat);
+        if (currentlyChoosenSeats < howManySeats) {
+            if(seatTab[first][second] == 0) {
+                currentlyChoosenSeats++;
+                choosenSeat.add(nr);
+                changeReservedColor(first, second);
+                jLabelMessage.setText("Rezerwacja miejsca: " + nr);
+                System.out.println("Rezerwacja miejsca: " + nr);
+                System.out.println("choosenSeat " + choosenSeat);
+                System.out.println("currentlyChoosenSeats " + currentlyChoosenSeats);
+                return;
+            }
+            if(seatTab[first][second] == 2) {
+                currentlyChoosenSeats--;
+                choosenSeat.remove(nr);
+                unReservSeat(first, second);
+                jLabelMessage.setText("Zwolniono miejsce: " + nr);
+                System.out.println("Zwolniono miejsce: " + nr);
+                System.out.println("choosenSeat " + choosenSeat);
+                System.out.println("currentlyChoosenSeats " + currentlyChoosenSeats);
+            }
         }
-       else if(seatTab[first][second] == 1 && choosenSeat == null) {
-           jLabelMessage.setText("Miejsce jest już zajęte");
-           System.out.println("Miejsce " + nr +" jest już zajęte");
-           System.out.println("choosenSeat " + choosenSeat);
-       }
-       else {
-           jLabelMessage.setText("Już wybrałeś miejsce");
-           System.out.println("choosenSeat " + choosenSeat);
-       }
+        else if (currentlyChoosenSeats == howManySeats && seatTab[first][second] == 2){
+                currentlyChoosenSeats--;
+                choosenSeat.remove(nr);
+                unReservSeat(first, second);
+                jLabelMessage.setText("Zwolniono miejsce: " + nr);
+                System.out.println("Zwolniono miejsce: " + nr);
+                System.out.println("choosenSeat " + choosenSeat);
+                System.out.println("currentlyChoosenSeats " + currentlyChoosenSeats);
+        }
+        else {
+            jLabelMessage.setText("Wybrano maksymalną liczbę miejsc!");
+        }
     }
-    
+
     public void changeReservedColor(int i, int j) {
         tab[i][j].setBackground(Color.orange);
         seatTab[i][j] = 2;
@@ -1565,8 +1574,10 @@ public class Client extends javax.swing.JFrame {
     }
     
     public void getMovies() {
+        movieComboBox.removeAllItems();
         for(String movie : Movies) {
             movieComboBox.addItem(movie);
+            movieComboBox.setSelectedItem(movie);
         }
     }
     
@@ -1597,7 +1608,7 @@ public class Client extends javax.swing.JFrame {
         return response;
     }
     
-    private static SOAPMessage getMiejsca() throws Exception {
+    private static SOAPMessage getMiejsca(String movieID) throws Exception {
         MessageFactory messageFactory = MessageFactory.newInstance();
         SOAPMessage soapMessage = messageFactory.createMessage();
         SOAPPart soapPart = soapMessage.getSOAPPart();
@@ -1612,7 +1623,7 @@ public class Client extends javax.swing.JFrame {
         SOAPBody soapBody = envelope.getBody();
         SOAPElement soapBodyElem = soapBody.addChildElement("getMiejsca", "int");
         SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("arg0");
-        soapBodyElem1.addTextNode("1"); //IDE SEANSU DLA KTOREGO ZWRACA ZAJETE MIEJSCA
+        soapBodyElem1.addTextNode(movieID); //IDE SEANSU DLA KTOREGO ZWRACA ZAJETE MIEJSCA
 
         MimeHeaders headers = soapMessage.getMimeHeaders();
         headers.addHeader("SOAPAction", serverURI  + "kino");
@@ -1627,7 +1638,12 @@ public class Client extends javax.swing.JFrame {
         return soapMessage;
     }
     
-    private static SOAPMessage dodajRejestracje() throws Exception {
+    private static SOAPMessage dodajRejestracje(String choosenMovieID, 
+            String name, 
+            String surename, 
+            String email, 
+            String phone, 
+            String seatsString) throws Exception {
         MessageFactory messageFactory = MessageFactory.newInstance();
         SOAPMessage soapMessage = messageFactory.createMessage();
         SOAPPart soapPart = soapMessage.getSOAPPart();
@@ -1643,22 +1659,22 @@ public class Client extends javax.swing.JFrame {
         SOAPElement soapBodyElem = soapBody.addChildElement("dodajRejestracje", "int"); //prefix (int) !! do zmiany
         
         SOAPElement soapBodyElem1 = soapBodyElem.addChildElement("arg0"); //wszystko w stringach podawac
-        soapBodyElem1.addTextNode("2"); //wstwic wlasciwe wartosci // IDE SEANSU
+        soapBodyElem1.addTextNode(choosenMovieID); //wstwic wlasciwe wartosci // IDE SEANSU
         
         SOAPElement soapBodyElem2 = soapBodyElem.addChildElement("arg1");
-        soapBodyElem2.addTextNode("Jan");
+        soapBodyElem2.addTextNode(name);
         
         SOAPElement soapBodyElem3 = soapBodyElem.addChildElement("arg2");
-        soapBodyElem3.addTextNode("Kowalski");
+        soapBodyElem3.addTextNode(surename);
         
         SOAPElement soapBodyElem4 = soapBodyElem.addChildElement("arg3");
-        soapBodyElem4.addTextNode("jan.kowalski@mail.com");
+        soapBodyElem4.addTextNode(email);
         
         SOAPElement soapBodyElem5 = soapBodyElem.addChildElement("arg4");
-        soapBodyElem5.addTextNode("123456789");
+        soapBodyElem5.addTextNode(phone);
         
         SOAPElement soapBodyElem6 = soapBodyElem.addChildElement("arg5");
-        soapBodyElem6.addTextNode("01");
+        soapBodyElem6.addTextNode(seatsString);
 
         MimeHeaders headers = soapMessage.getMimeHeaders();
         headers.addHeader("SOAPAction", serverURI  + "test");
@@ -1673,10 +1689,202 @@ public class Client extends javax.swing.JFrame {
         return soapMessage;
     }
     
+    //DOWNLOAD FILE WITH CINEMAS
+    public static void downloadCinemas() {
+        String fileURL = "http://" + IPadress + ":" + portNumber + "/testFolder/cinemas.txt";
+        //String saveDir = "D:/";
+        //System.out.println(fileURL);
+        try {
+            //HttpDownloadUtility.downloadFile(fileURL, saveDir);
+            HttpDownloadUtility.downloadFile(fileURL);
+       } catch (Exception ex) {
+            System.out.println(ex);
+           ex.printStackTrace();
+       }
+    }
+    
+    //DOWNLOAD FILE WITH MOVIES
+    public static void downloadMovies() {
+        String fileURL = "http://" + IPadress + ":" + portNumber + "/testFolder/movies.txt";
+        try {
+            HttpDownloadUtility.downloadFile(fileURL);
+       } catch (Exception ex) {
+            System.out.println(ex);
+           ex.printStackTrace();
+       }
+    }
+    
+    //ALL AVAILABLE CINEMAS
+    public void setCinemas() {
+        try {
+            Scanner scanner = new Scanner(new File("cinemas.txt"));
+            while(scanner.hasNextLine()) { 
+                String cinameName = scanner.nextLine();
+                int cinemaID = Integer.parseInt(scanner.nextLine());
+                Cinemas c = new Cinemas();
+                c.name = cinameName;
+                c.id = cinemaID;
+                Kina.add(c);
+                }
+            for(int i=0; i<Kina.size(); i++) { 
+                Cinemas.add(Kina.get(i).name);
+            }
+            getCinemas();
+        }
+        catch(FileNotFoundException ex) {
+            System.out.println("BRAK PLIKU Z DOSTĘPNYMI KINAMI");
+        }
+    }
+    
+    //ALL AVAILABLE MOVIES
+    public void setMovies() {
+        try {
+            Scanner scanner = new Scanner(new File("movies.txt"));
+            while(scanner.hasNextLine()) { 
+                String movieName = scanner.nextLine();
+                String movieDate = scanner.nextLine();
+                int movieID = Integer.parseInt(scanner.nextLine());
+                int cinemaID = Integer.parseInt(scanner.nextLine());
+                Movies m = new Movies();
+                m.name = movieName;
+                m.date = movieDate;
+                m.movieID = movieID;
+                m.cinemaID = cinemaID;
+                Filmy.add(m);
+            }
+            for(int i=0; i<Filmy.size(); i++) {
+                String temp = Filmy.get(i).name + ", " + Filmy.get(i).date;
+                //String temp = Filmy.get(i).name;
+                Movies.add(temp);
+            }
+        }
+        catch(FileNotFoundException ex) {
+            System.out.println("BRAK PLIKU Z DOSTĘPNYMI KINAMI");
+        }
+    }
+    public void findMovies(String cinema) {
+        for(int i=0; i<Kina.size(); i++) {
+            if(Kina.get(i).name == cinema) {
+                choosenCinemaID = Kina.get(i).id;
+                continue;
+            }
+        }
+        Movies.clear();
+        for(int i=0; i<Filmy.size(); i++) {
+            if(Filmy.get(i).cinemaID == choosenCinemaID) {
+                //String temp = Filmy.get(i).name;
+                String temp = Filmy.get(i).name + ", " + Filmy.get(i).date;
+                Movies.add(temp);
+            }            
+        }
+        getMovies();
+        System.out.println("Wybrano kino o id: " + choosenCinemaID);
+    }
+    
+    //IF 'CHOOSE' BUTTON PRESSED, WE NEED TO KNOW ID OF SELECTED MOVIE
+    public int findMovieID(String movie) {
+        int id = 0;
+        for(int i=0; i<Filmy.size(); i++){
+            String temp = Filmy.get(i).name + ", " + Filmy.get(i).date;
+            if(movie.equals(temp)) {
+                id =  Filmy.get(i).movieID;
+                break;
+            }
+        }
+        return id;
+    }
+    
+    public String downloadSeats(int movieID) {
+        String stringID = Integer.toString(movieID);
+        String result = null;
+        try {
+            // Create SOAP Connection
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+            // Send SOAP Message to SOAP Server
+            String url = "http://" + IPadress + ":" + portNumber + "/WebServices/kino?wsdl"; //192.168.0.16
+            SOAPMessage soapResponse = soapConnection.call(getMiejsca(stringID), url);
+
+            // Process the SOAP Response
+            result = printSOAPResponse(soapResponse);
+
+            soapConnection.close();
+        } catch (Exception e) {
+            System.err.println("Error occurred while sending SOAP Request to Server");
+            e.printStackTrace();
+        }
+        return result; 
+    }
+    
+    public String saveReservation(String choosenMovieID, 
+            String name, 
+            String surename, 
+            String email, 
+            String phone, 
+            String seatsString) {
+        String result = null;
+        try {
+            // Create SOAP Connection
+            SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
+            SOAPConnection soapConnection = soapConnectionFactory.createConnection();
+
+            // Send SOAP Message to SOAP Server
+            String url = "http://" + IPadress + ":" + portNumber + "/WebServices/kino?wsdl";
+            SOAPMessage soapResponse = soapConnection.call(dodajRejestracje(choosenMovieID,
+                    name,
+                    surename,
+                    email,
+                    phone,
+                    seatsString), url);
+
+            // Process the SOAP Response
+            result = printSOAPResponse(soapResponse);
+
+            soapConnection.close();
+        } catch (Exception e) {
+            System.err.println("Error occurred while sending SOAP Request to Server");
+            e.printStackTrace();
+        }
+        return result;
+    }
+    //CHANGE GUI STATE IF RESERVATION WAS OK
+    public void clearAfterReservation(){
+        for (int i=0; i<6; i++) {
+            for (int j=0; j<10; j++) {
+                tab[i][j].setEnabled(false);
+            }
+        }
+       choosenCity = null;
+       choosenMovie = null;
+       choosenSeat.clear();
+       unAvailableSeats.clear();
+       currentlyChoosenSeats = 0;
+       howManySeats = Integer.parseInt( jComboBoxHowMany.getSelectedItem().toString() );
+    }
+    
+    //CHANGE GUI STATE IF RESERVATION FAILED
+    public void clearAfterFalseReservation(String choosenMovieID) {
+        unAvailableSeats.clear();
+        choosenSeat.clear();
+        currentlyChoosenSeats = 0;
+        howManySeats = Integer.parseInt( jComboBoxHowMany.getSelectedItem().toString() );
+        String usedSeats = downloadSeats(Integer.parseInt(choosenMovieID));
+        if(usedSeats == "empty") {
+            jLabelMessage.setText("BŁAD, nie znaleziono seansu o podanym ID");
+            return;
+        }
+        for(String part : usedSeats.split("/")) {
+            unAvailableSeats.add(part);
+        }
+       fillColor();
+        
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton chooseButton;
     private javax.swing.JComboBox cinemaComboBox;
+    private javax.swing.JButton downloadButton;
     private javax.swing.JTextField emailjTextField;
     private javax.swing.JButton jButton00;
     private javax.swing.JButton jButton01;
@@ -1688,7 +1896,6 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JButton jButton07;
     private javax.swing.JButton jButton08;
     private javax.swing.JButton jButton09;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton12;
@@ -1699,7 +1906,6 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JButton jButton17;
     private javax.swing.JButton jButton18;
     private javax.swing.JButton jButton19;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton20;
     private javax.swing.JButton jButton21;
     private javax.swing.JButton jButton22;
@@ -1710,7 +1916,6 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JButton jButton27;
     private javax.swing.JButton jButton28;
     private javax.swing.JButton jButton29;
-    private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton30;
     private javax.swing.JButton jButton31;
     private javax.swing.JButton jButton32;
@@ -1741,7 +1946,9 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JButton jButton57;
     private javax.swing.JButton jButton58;
     private javax.swing.JButton jButton59;
+    private javax.swing.JComboBox jComboBoxHowMany;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
