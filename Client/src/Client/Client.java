@@ -1055,8 +1055,10 @@ public class Client extends javax.swing.JFrame {
            jLabelMessage.setText("BŁAD, nie znaleziono seansu o podanym ID");
            return;
        }
-       for(String part : usedSeats.split("/")) {
-           unAvailableSeats.add(part);
+       if(usedSeats != "") {
+           for(String part : usedSeats.split("/")) {
+               unAvailableSeats.add(part);
+           }
        }
        reservButton.setEnabled(true);
        jLabelMessage.setText("Rezerwujesz " + howManySeats + " miejsc");
@@ -1581,7 +1583,7 @@ public class Client extends javax.swing.JFrame {
         }
     }
     
-    private static String printSOAPResponse(SOAPMessage soapResponse) throws Exception { //void
+private static String printSOAPResponse(SOAPMessage soapResponse) throws Exception { //void
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         Source sourceContent = soapResponse.getSOAPPart().getContent();
@@ -1590,11 +1592,15 @@ public class Client extends javax.swing.JFrame {
         StreamResult result = new StreamResult(writer);
         transformer.transform(sourceContent, result);
         String response=writer.getBuffer().toString(); // !!
+        
+        if(!(response.contains("<return>")))
+        {  
+        		return "";
+        }
         try {
             String [] tmp=response.split("<return>"); //new
             String tmp2=tmp[1]; // na try
             tmp=tmp2.split("</return>");
-
             response=tmp[0];
              
         }
